@@ -11,6 +11,8 @@ void main() {
 export const simulationFragmentShader = `
 uniform sampler2D textureA;
 uniform vec2 mouse;
+uniform vec2 boat;
+uniform float boatStrength;
 uniform vec2 resolution;
 uniform float time;
 uniform int frame;
@@ -60,6 +62,16 @@ void main(){
 
         if (dist <= 0.02) { // Smaller radius for more precise ripples
             pressure += 3.0 * (1.0 - dist / 0.02); // Increased intensity
+        }
+    }
+
+    // The boat pushes the water as it sails — a gentle wake scaled by its speed.
+    if (boatStrength > 0.0) {
+        vec2 boatUV = boat / resolution;
+        float bdist = distance(uv, boatUV);
+
+        if (bdist <= 0.03) {
+            pressure += boatStrength * (1.0 - bdist / 0.03);
         }
     }
 
