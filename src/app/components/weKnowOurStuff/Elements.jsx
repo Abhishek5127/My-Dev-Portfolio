@@ -384,7 +384,7 @@ const Elements = () => {
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[100vh] select-none overflow-hidden"
+      className="relative w-full h-[100vh] cursor-crosshair select-none overflow-hidden"
       aria-label={TEXT}
     >
       {/* The boat. pointer-events-none keeps the ripple interaction on the
