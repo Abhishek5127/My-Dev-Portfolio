@@ -1,6 +1,7 @@
 import React from 'react';
 import release from "@/app/assets/export"
 import Image from 'next/image';
+import BouncyBlob from './BouncyBlob';
 
 const Links = [
   {
@@ -28,9 +29,9 @@ const Links = [
 const NavComponent = () => {
   return (
     <div>
-      <div className="w-70 h-15 select-none rounded-full cursor-pointer border p-3 border-2 bg-black text-white flex justify-around items-center">
+      <BouncyBlob className="w-70 h-15 select-none rounded-full cursor-pointer border p-3 border-2 bg-black text-white flex justify-around items-center">
         {Links.map((item, index) => (
-          <div key={index}>
+          <div key={index} className="relative z-10">
             <Image
             className='invert'
             src={item.icon}
@@ -40,9 +41,10 @@ const NavComponent = () => {
             />
           </div>
         ))}
-      </div>
+      </BouncyBlob>
     </div>
   );
 };
 
 export default NavComponent;
+
