@@ -10,12 +10,33 @@ import {
 } from './Shaders'
 
 const TEXT = 'We Know Our Stuff Better Than Anybody!!'
-const BG_COLOR = '#94080f'
+const BG_COLOR = '#0a0a0a'
 const TEXT_COLOR = '#fef4b8'
+// Font size as a fraction of the banner height (0.13 = ~13% of height).
+// Bump this up for bigger text, down for smaller.
+const Text_SIZE = 0.12;
+
+// --- Font (easy to change) ---
+// FONT_CSS_VAR points at a font loaded in layout.tsx via next/font (the var
+// resolves to the real hashed family name at runtime). FONT_FALLBACK is used
+// until the webfont is ready / if the var is missing. To switch fonts, load a
+// new one in layout.tsx and point FONT_CSS_VAR at its variable.
+const FONT_WEIGHT = 'bold'
+const FONT_CSS_VAR = '--font-poppins'
+const FONT_FALLBACK = 'Poppins, system-ui, sans-serif'
 
 // Where the boat spawns, in UV space (0..1). v is measured from the bottom,
 // matching the simulation texture's coordinate space. Left-center start.
 const SHIP_UV = { x: 0.12, v: 0.5 }
+
+// --- Boat size (easy to change) ---
+// BOAT_SIZE is the rendered width of the boat in px (height scales to keep its
+// aspect ratio). The wake offsets are expressed as fractions of this, so the
+// collision physics scales WITH the boat — bump BOAT_SIZE and the stern wake /
+// bow sampling follow automatically.
+const BOAT_SIZE = 96 // px
+const STERN_FACTOR = 0.27 // wake born this far behind the boat center, × BOAT_SIZE
+const BOW_FACTOR = 0.23 // water read this far ahead of the boat center, × BOAT_SIZE
 
 const Elements = () => {
   const containerRef = useRef(null)
@@ -128,9 +149,15 @@ const Elements = () => {
       ctx.fillStyle = BG_COLOR
       ctx.fillRect(0, 0, resWidth, resHeight)
 
-      const fontSize = Math.max(16, Math.floor(resHeight * 0.13))
+      const fontSize = Math.max(16, Math.floor(resHeight * Text_SIZE))
+      // Resolve the next/font CSS variable to its real family name (canvas
+      // can't parse var()); fall back until the webfont has loaded.
+      const cssFamily = getComputedStyle(document.documentElement)
+        .getPropertyValue(FONT_CSS_VAR)
+        .trim()
+      const fontFamily = cssFamily || FONT_FALLBACK
       ctx.fillStyle = TEXT_COLOR
-      ctx.font = `bold ${fontSize}px Geist, system-ui, sans-serif`
+      ctx.font = `${FONT_WEIGHT} ${fontSize}px ${fontFamily}`
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
       ctx.imageSmoothingEnabled = true
@@ -147,6 +174,12 @@ const Elements = () => {
     }
 
     drawText()
+
+    // Canvas may paint before Poppins is ready; redraw once it loads so we
+    // don't get stuck on the fallback font.
+    if (document.fonts?.ready) {
+      document.fonts.ready.then(drawText)
+    }
 
     const handleResize = () => {
       width = container.clientWidth
@@ -192,17 +225,24 @@ const Elements = () => {
     let roll = 0, rollV = 0 // tilt, deg (spring)
 
     // Tunables.
-    const CRUISE = 20 // baseline rightward sailing speed, px/s
+    const CRUISE = 40 // baseline rightward sailing speed, px/s
     const CRUISE_K = 0.9 // how firmly it holds the cruise speed
     const WAVE_X = 520 // horizontal shove from wave slope
     const WAVE_Y = 260 // vertical nudge from wave slope (kept gentle)
-    const CENTER_PULL = 6 // spring keeping the boat near its center line
+    const CENTER_PULL = 0.5 // spring keeping the boat near its center line
     const DRAG_Y = 2.6 // vertical water resistance (1/s)
     const HEAVE_GAIN = 26 // crest height → vertical bob, px
-    const ROLL_GAIN = 80 // wave slope → tilt, deg
-    const SPRING = 90 // stiffness of the heave/roll springs
+    const ROLL_GAIN = 60 // wave slope → tilt, deg
+    const SPRING = 20 // stiffness of the heave/roll springs
     const SPRING_DAMP = 11 // how quickly the springs settle
-    const WRAP_MARGIN = 90 // sail this far off-edge before reappearing
+    const WRAP_MARGIN = 10 // sail this far off-edge before reappearing
+    // Wake: the boat stamps a stronger, longer-lived trail from its stern, and
+    // reads the water from its bow — so that trail spreads out behind/around it
+    // without shoving the boat back. This is what keeps self-impact low.
+    const WAKE_GAIN = 0.5 // wake strength at full speed (was a faint 0.5)
+    const WAKE_SPEED_REF = 40 // speed (px/s) at which the wake reaches full strength
+    const STERN_OFFSET = BOAT_SIZE * STERN_FACTOR // px behind the boat where the wake is born
+    const BOW_OFFSET = BOAT_SIZE * BOW_FACTOR // px ahead of the boat where it reads the water
 
     // Initial momentum: already moving right when it spawns.
     velX = CRUISE
@@ -218,9 +258,14 @@ const Elements = () => {
     const updateShip = (dt) => {
       if (!ship || !canSampleWaves || dt <= 0) return
 
-      // Sample the wave field under the boat's current position.
-      const uvX = posX / width
-      const uvV = 1 - posY / height
+      // Read the water a little AHEAD of the boat (at the bow), in cleaner
+      // water. This lets the boat ride genuine waves while largely ignoring its
+      // own wake, which is laid down behind it at the stern.
+      const sampleSpeed = Math.hypot(velX, velY)
+      const headX = sampleSpeed > 1e-3 ? velX / sampleSpeed : 1
+      const headY = sampleSpeed > 1e-3 ? velY / sampleSpeed : 0
+      const uvX = (posX + headX * BOW_OFFSET) / width
+      const uvV = 1 - (posY + headY * BOW_OFFSET) / height
       const px = Math.min(resWidth - 1, Math.max(0, Math.floor(uvX * resWidth)))
       const py = Math.min(resHeight - 1, Math.max(0, Math.floor(uvV * resHeight)))
 
@@ -271,11 +316,17 @@ const Elements = () => {
       ship.style.transform =
         `translate(${posX}px, ${posY - heave}px) translate(-50%, -50%) rotate(${roll + BASE_TILT}deg)`
 
-      // Feed the boat back into the water: it injects a wake scaled by its speed.
-      // Convert to the sim's resolution space (x→right, y→bottom-up), like the mouse.
+      // Feed the boat back into the water: lay a strong wake from the STERN, so
+      // the trail streams out behind the boat — and spreads on all sides as the
+      // wave sim propagates it — instead of pushing the boat forward. Convert to
+      // the sim's resolution space (x→right, y→bottom-up), like the mouse.
       const speed = Math.hypot(velX, velY)
-      simMaterial.uniforms.boat.value.set(posX * dpr, (height - posY) * dpr)
-      simMaterial.uniforms.boatStrength.value = Math.min(speed / 120, 1) * 0.5
+      const wakeHeadX = speed > 1e-3 ? velX / speed : 1
+      const wakeHeadY = speed > 1e-3 ? velY / speed : 0
+      const wakeX = posX - wakeHeadX * STERN_OFFSET
+      const wakeY = posY - wakeHeadY * STERN_OFFSET
+      simMaterial.uniforms.boat.value.set(wakeX * dpr, (height - wakeY) * dpr)
+      simMaterial.uniforms.boatStrength.value = Math.min(speed / WAKE_SPEED_REF, 1) * WAKE_GAIN
     }
 
     let rafId = 0
@@ -333,7 +384,7 @@ const Elements = () => {
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[50vh] bg-orange-600 select-none overflow-hidden"
+      className="relative w-full h-[100vh] select-none overflow-hidden"
       aria-label={TEXT}
     >
       {/* The boat. pointer-events-none keeps the ripple interaction on the
@@ -343,8 +394,8 @@ const Elements = () => {
         src="/boat.png"
         alt=""
         draggable={false}
-        className="pointer-events-none absolute left-0 top-0 w-20 select-none"
-        style={{ height: 'auto', transformOrigin: 'center', willChange: 'transform' }}
+        className="pointer-events-none absolute left-0 top-0 select-none"
+        style={{ width: BOAT_SIZE, height: 'auto', transformOrigin: 'center', willChange: 'transform' }}
       />
     </div>
   )

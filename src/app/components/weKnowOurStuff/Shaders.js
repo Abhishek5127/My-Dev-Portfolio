@@ -52,8 +52,8 @@ void main(){
 
     pVel -= 0.005 * delta * pressure;
 
-    pVel *= 1.0 - 0.002 * delta;
-    pressure *= 0.999;
+    pVel *= 1.0 - 0.0016 * delta;
+    pressure *= 0.9993;
 
     vec2 mouseUV = mouse / resolution;
 
@@ -65,13 +65,17 @@ void main(){
         }
     }
 
-    // The boat pushes the water as it sails — a gentle wake scaled by its speed.
+    // The boat pushes the water as it sails — a small, sharp wake scaled by its
+    // speed. Tight radius + cubic falloff keeps the impact concentrated rather
+    // than a broad, soft splat.
     if (boatStrength > 0.0) {
         vec2 boatUV = boat / resolution;
         float bdist = distance(uv, boatUV);
 
-        if (bdist <= 0.03) {
-            pressure += boatStrength * (1.0 - bdist / 0.03);
+        float bradius = 0.025;
+        if (bdist <= bradius) {
+            float f = 1.0 - bdist / bradius;
+            pressure += boatStrength * f * f * f;
         }
     }
 
