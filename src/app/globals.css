@@ -1,8 +1,14 @@
 @import "tailwindcss";
 
-*{
+*, ::before, ::after {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 @theme inline {
@@ -10,6 +16,11 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-bricolage: var(--font-bricolage);
+}
+
+.font-bricolage {
+  font-family: var(--font-bricolage), var(--font-geist-sans), sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -18,4 +29,5 @@
     --foreground: #ededed;
   }
 }
+
 

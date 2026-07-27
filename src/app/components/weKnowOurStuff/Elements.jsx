@@ -22,8 +22,8 @@ const Text_SIZE = 0.12;
 // until the webfont is ready / if the var is missing. To switch fonts, load a
 // new one in layout.tsx and point FONT_CSS_VAR at its variable.
 const FONT_WEIGHT = 'bold'
-const FONT_CSS_VAR = '--font-poppins'
-const FONT_FALLBACK = 'Poppins, system-ui, sans-serif'
+const FONT_CSS_VAR = '--font-bricolage'
+const FONT_FALLBACK = 'Bricolage Grotesque, system-ui, sans-serif'
 
 // Where the boat spawns, in UV space (0..1). v is measured from the bottom,
 // matching the simulation texture's coordinate space. Left-center start.

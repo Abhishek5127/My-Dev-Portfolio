@@ -1,10 +1,13 @@
-import Elements from "@/app/components/weKnowOurStuff/Elements"
-import Hero from "@/app/components/HeroPage/Hero"
+import HeroSection from "./components/HeroSection";
+import BannerSection from "./components/BannerSection";
+import ProjectsSection from "./components/ProjectsSection";
+
 export default function Home() {
   return (
-    <div>
-      <Hero/>
-        <Elements/>
-    </div>
+    <main className="min-h-screen w-full overflow-x-hidden bg-black font-[var(--font-poppins)] text-white">
+      <HeroSection />
+      <BannerSection />
+      <ProjectsSection />
+    </main>
   );
 }
