@@ -1,6 +1,7 @@
 import Image from "next/image";
 import devPhoto from "@/app/assets/devPhoto/devPhoto.png";
 import release from "@/app/assets/export";
+import Navbar from "./navbar";
 
 const socialLinks = [
   { label: "GitHub", icon: release.Github },
@@ -11,56 +12,93 @@ const socialLinks = [
 
 export default function HeroSection() {
   return (
-    <section className="relative box-border w-full overflow-x-hidden bg-[#151515] px-4 py-5 sm:px-8 sm:py-8 md:px-12 lg:px-16 xl:px-24">
-      {/* Navbar */}
-      <div className="flex w-full justify-end">
-        <div className="mr-4 flex h-11 w-full max-w-6xl overflow-hidden items-center justify-end rounded-full bg-[#dddddd] px-6 sm:mr-6 sm:h-14 sm:px-8 lg:mr-8 lg:h-18 lg:px-10">
-          <button className="font-bricolage text-x font-bold w-30 text-black sm:text-3xl lg:text-4xl">
-            Menu
-          </button>
-        </div>
+    <section className="relative box-border w-full overflow-hidden bg-[#0d0d0d] pt-5 pb-0 sm:pt-8 md:pt-10">
+      {/* Thin vertical grid line on the left */}
+      <div className="flex h-auto w-auto gap-3">
+      <div className="pointer-events-none absolute bottom-0 left-[clamp(1rem,4vw,4rem)] top-0 z-10 w-px bg-zinc-800/60" />
+      <div className="pointer-events-none absolute bottom-0 left-[clamp(1rem,4vw,4rem)] top-0 z-10 w-px bg-zinc-800/60" />
+
       </div>
 
-      <div className="mt-6 flex flex-col items-center justify-between gap-6 sm:mt-10 sm:flex-row sm:gap-10 lg:mt-14">
-        <div className="w-full sm:max-w-[360px] md:max-w-[460px] lg:max-w-[560px]">
-          <h2 className="font-bricolage text-xl font-bold leading-tight text-white sm:text-2xl md:text-3xl lg:text-4xl">
+      <div className="flex items-center justify-between px-[clamp(1.5rem,5vw,6rem)]">
+        <div className="text-white">A</div>
+        <Navbar />
+      </div>
+
+      {/* Main content row */}
+      <div className="mt-8 flex items-start gap-8 justify-around h-[60vh]">
+        {/* Left: heading and paragraph */}
+        <div className="min-w-0 pl-3 max-w-[580px] flex-1 self-center lg:self-center">
+          <h2 className="font-bricolage max-w-[13ch] text-[clamp(2rem,3.2vw,3.6rem)] font-extrabold leading-[0.95] tracking-[-0.045em] text-white">
             Build Something Really Matters
           </h2>
-          <p className="mt-2 text-xs font-semibold leading-relaxed text-zinc-200 sm:mt-4 sm:text-base md:text-lg lg:text-xl">
-            We build digital experiences that are designed to deliver real, measurable results—not just look good. Every website, application, and interface we create is focused on helping businesses grow by improving user experience, increasing conversions, and strengthening their online presence. Our goal is simple: build solutions that make a meaningful impact and turn ideas into tangible success.
 
+          <p className="mt-5 max-w-[550px] text-[clamp(0.95rem,1.18vw,1.2rem)] font-medium leading-[1.45] tracking-[-0.02em] text-zinc-300">
+            We build digital experiences that are designed to deliver real,
+            measurable results, not just look good. Every website, application,
+            and interface we create is focused on helping businesses grow by
+            improving user experience, increasing conversions, and
+            strengthening their online presence. Our goal is simple: build
+            solutions that make a meaningful impact and turn ideas into
+            tangible success.
           </p>
         </div>
 
-        <div className="flex max-w-full shrink-0 items-center justify-end">
-          <div className="relative h-[140px] w-[180px] overflow-hidden rounded-[1.8rem_0_0_1.8rem] bg-[#dddddd] sm:h-[190px] sm:w-[260px] sm:rounded-[2.5rem_0_0_2.5rem] md:h-[240px] md:w-[350px] lg:h-[300px] lg:w-[440px]">
+        {/* Right: image card and social strip */}
+        <div className="flex w-full shrink-0 items-stretch self-start overflow-hidden rounded-l-[clamp(1.5rem,3vw,3.6rem)] bg-black shadow-2xl shadow-black/40 sm:w-auto lg:self-center">
+          {/* Photo */}
+          <div
+            className="relative overflow-hidden bg-zinc-900"
+            style={{
+              width: "clamp(230px, 37vw, 560px)",
+              height: "clamp(210px, 27vw, 390px)",
+            }}
+          >
             <Image
               src={devPhoto}
               alt="Abhishek Choudhary"
               fill
               priority
-              sizes="(min-width: 1024px) 440px, (min-width: 768px) 350px, 260px"
-              className="object-cover"
+              sizes="(min-width: 1280px) 560px, (min-width: 768px) 37vw, 230px"
+              className="object-contain object-center"
             />
           </div>
 
-          <div className="flex h-[130px] w-9 shrink-0 flex-col items-center justify-center gap-2 rounded-full bg-black sm:h-[175px] sm:w-12 sm:gap-3 md:h-[220px] md:w-15 lg:h-[275px] lg:w-18">
+          {/* Social icons */}
+          <div
+            className="flex shrink-0 flex-col items-center justify-center gap-[clamp(1rem,2vw,2rem)] bg-black"
+            style={{
+              width: "clamp(3rem,4.5vw,5.5rem)",
+              height: "clamp(210px,27vw,390px)",
+              paddingTop: "clamp(0.75rem,1.2vw,1.5rem)",
+              paddingBottom: "clamp(0.75rem,1.2vw,1.5rem)",
+            }}
+          >
             {socialLinks.map((item) => (
               <Image
                 key={item.label}
                 src={item.icon}
                 alt={item.label}
-                width={20}
-                height={20}
-                className="invert sm:h-[26px] sm:w-[26px] md:h-[32px] md:w-[32px]"
+                width={28}
+                height={28}
+                className="invert opacity-100"
+                style={{
+                  width: "clamp(18px,1.9vw,32px)",
+                  height: "clamp(18px,1.9vw,32px)",
+                }}
               />
             ))}
           </div>
         </div>
       </div>
 
-      <h1 className="font-bricolage mt-8 w-full select-none text-center text-[clamp(1.75rem,7.5vw,7.5rem)] font-bold leading-none tracking-tight text-white sm:mt-12 lg:mt-16">
-        Abhishek <span className="mx-1 sm:mx-2">{"\u2726"}</span> Choudhary
+      {/* Oversized name */}
+      <h1
+        className="font-bricolage mt-6 w-full select-none text-center text-[clamp(3.5rem,14vw,8rem)] font-extrabold leading-none tracking-tight text-white sm:mt-10 lg:mt-14"
+      >
+        Abhishek{" "}
+        <span className="mx-1 inline-block sm:mx-2">✦</span>{" "}
+        Choudhary
       </h1>
     </section>
   );

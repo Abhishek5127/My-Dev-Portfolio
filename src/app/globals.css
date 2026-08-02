@@ -30,4 +30,10 @@ html, body {
   }
 }
 
+@media (min-width: 1024px) {
+  .hero-reference-frame {
+    margin-left: 108px;
+  }
+}
+
 
