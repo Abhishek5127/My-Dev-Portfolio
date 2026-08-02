@@ -36,10 +36,14 @@ export default function BannerSection() {
         <div className="h-full w-full bg-[#0d0d0d]" />
       </div>
 
-      {/* ── Full-width text overlay — spans all three columns ──────
-          pointer-events-none lets mouse events fall through to the
-          water canvas in section 1, so ripples still work.          */}
-      <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-6">
+      {/* ── Full-width text overlay — clipped to columns 2 & 3 ────────────
+          clip-path hides the section-1 slice so the wave-distorted canvas
+          version shows there instead. pointer-events:none lets mouse events
+          fall through to the water canvas.                                  */}
+      <div
+        className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-6"
+        style={{ clipPath: 'inset(0 0 0 33.33%)' }}
+      >
         <p
           className="font-bricolage text-center font-black leading-[1.05] text-white select-none"
           style={{ fontSize: "clamp(1.8rem, 7.5vw, 5.5rem)" }}
