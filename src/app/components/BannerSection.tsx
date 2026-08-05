@@ -24,8 +24,13 @@ export default function BannerSection() {
       </div>
 
       <div className="absolute inset-y-0 left-[34.7%] z-0 grid w-[25%] grid-cols-7">
-        {stripeColors.map((color) => (
-          <div key={color} style={{ backgroundColor: color }} />
+        {stripeColors.map((color, index) => (
+          <div
+            key={color}
+            aria-label={`Color strip ${index + 1}`}
+            className="cursor-cell transition-[filter,box-shadow,transform] duration-300 ease-out hover:z-10 hover:scale-x-[1.03] hover:brightness-150 hover:saturate-150 hover:shadow-[0_0_42px_rgba(255,255,255,0.35)]"
+            style={{ backgroundColor: color }}
+          />
         ))}
       </div>
 

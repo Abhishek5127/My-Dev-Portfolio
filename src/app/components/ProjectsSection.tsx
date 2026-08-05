@@ -2,143 +2,192 @@
 
 import { useEffect, useRef, useState } from "react";
 
+type Project = {
+  title: string;
+  description?: string;
+  image?: string;
+};
+
+const projects: Project[] = [
+  {
+    title: "lorem fdsfkjfs d",
+    description: "dljfldskl jsj fdjkljdsklj",
+  },
+  {
+    title: "lorem fdsfkjfs d",
+    description: "djfldskl jsj fdjkljdsklj",
+  },
+  {
+    title: "Project title",
+    description: "Add project detail here",
+  },
+];
+
+const clamp = (value: number, min = 0, max = 1) =>
+  Math.min(max, Math.max(min, value));
+
+const range = (value: number, start: number, end: number) =>
+  clamp((value - start) / (end - start));
+
+const easeOut = (value: number) => 1 - Math.pow(1 - value, 3);
+
+const fadeWindow = (
+  progress: number,
+  enterStart: number,
+  enterEnd: number,
+  exitStart: number,
+  exitEnd: number,
+) => range(progress, enterStart, enterEnd) * (1 - range(progress, exitStart, exitEnd));
+
 export default function ProjectsSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  // stage: 0 = hidden, 1 = capsule in, 2 = side cards in, 3 = elements exit up
-  const [stage, setStage] = useState<number>(0);
-  const capsuleTimeRef = useRef<number | null>(null);
+  const targetProgressRef = useRef(0);
+  const easedProgressRef = useRef(0);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const handleScroll = () => {
+    let animationFrame = 0;
+    let isAnimating = true;
+
+    const updateTargetProgress = () => {
       const section = sectionRef.current;
       if (!section) return;
 
       const rect = section.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      const now = Date.now();
-
-      // Step 1: Capsule enters first when section arrives
-      if (rect.top <= windowHeight * 0.85 && capsuleTimeRef.current === null) {
-        capsuleTimeRef.current = now;
-        setStage(1);
-        return;
-      }
-
-      // Step 2: Side Cards CANNOT enter until at least 750ms AFTER capsule has settled + user scrolls
-      if (
-        capsuleTimeRef.current !== null &&
-        now - capsuleTimeRef.current >= 750 &&
-        rect.top <= windowHeight * 0.65
-      ) {
-        setStage((prev) => (prev < 3 ? 2 : prev));
-      }
-
-      // Step 3: Elements exit UP together when user scrolls past section
-      if (rect.top <= -rect.height * 0.15) {
-        setStage(3);
-      }
+      const scrollDistance = Math.max(1, rect.height - window.innerHeight);
+      targetProgressRef.current = clamp(-rect.top / scrollDistance);
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
+    const animateProgress = () => {
+      if (!isAnimating) return;
 
-    return () => window.removeEventListener("scroll", handleScroll);
+      const current = easedProgressRef.current;
+      const target = targetProgressRef.current;
+      const next = current + (target - current) * 0.075;
+
+      easedProgressRef.current = Math.abs(target - next) < 0.001 ? target : next;
+      setProgress(easedProgressRef.current);
+      animationFrame = requestAnimationFrame(animateProgress);
+    };
+
+    const handleScroll = () => updateTargetProgress();
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll);
+    updateTargetProgress();
+    animateProgress();
+
+    return () => {
+      isAnimating = false;
+      cancelAnimationFrame(animationFrame);
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
   }, []);
 
-  // Compute opacity & Y transform based on stage
-  const capsuleOpacity = stage === 1 || stage === 2 ? 1 : 0;
-  const capsuleY = stage === 0 ? 90 : stage === 3 ? -130 : 0;
+  const capsuleEnter = easeOut(range(progress, 0.02, 0.18));
+  const capsuleExit = range(progress, 0.9, 1);
+  const capsuleOpacity = capsuleEnter * (1 - capsuleExit);
+  const capsuleY = 165 * (1 - capsuleEnter) - 190 * capsuleExit;
 
-  const cardsOpacity = stage === 2 ? 1 : 0;
-  const cardsY = stage < 2 ? 70 : stage === 3 ? -130 : 0;
+  const getProjectMotion = (index: number) => {
+    const enterStart = 0.28 + index * 0.08;
+    const enterEnd = enterStart + 0.16;
+    const exitStart = 0.58 + index * 0.09;
+    const exitEnd = exitStart + 0.18;
+    const enter = easeOut(range(progress, enterStart, enterEnd));
+    const exit = easeOut(range(progress, exitStart, exitEnd));
+
+    return {
+      opacity: fadeWindow(progress, enterStart, enterEnd, exitStart, exitEnd),
+      transform: `translateY(${190 * (1 - enter) - 235 * exit}px)`,
+    };
+  };
+
+  const renderProjectImage = (project: Project) => (
+    <div
+      className="aspect-[0.78] w-full rounded-lg bg-[#dddddd] bg-cover bg-center sm:rounded-xl md:rounded-2xl"
+      style={project.image ? { backgroundImage: `url(${project.image})` } : undefined}
+    />
+  );
+
+  const renderProjectText = (project: Project) =>
+    project.title || project.description ? (
+      <p className="mt-1.5 text-[clamp(0.6rem,1.8vw,1.35rem)] font-bold leading-tight text-white sm:mt-3">
+        {project.title}
+        {project.description ? (
+          <>
+            <br />
+            {project.description}
+          </>
+        ) : null}
+      </p>
+    ) : null;
 
   return (
     <section
       ref={sectionRef}
-      className="relative mt-6 h-[560px] w-full overflow-hidden bg-[#151515] sm:mt-10 sm:h-[750px] md:mt-14 md:h-[980px] lg:h-[1200px]"
+      className="relative mt-6 h-[340vh] w-full bg-[#151515] sm:mt-10 md:mt-14"
     >
-      {/* ── CENTER CAPSULE (Stage 1 entrance) ── */}
-      <div
-        className="absolute top-[12%] box-border flex h-[76%] w-[40%] min-w-[160px] max-w-[480px] flex-col items-center justify-center rounded-t-full rounded-b-full border-2 border-[#dddddd] bg-[#4f8680] px-[4%] text-center sm:border-3 md:border-4"
-        style={{
-          left: "50%",
-          zIndex: 20,
-          opacity: capsuleOpacity,
-          transform: `translateX(-50%) translateY(${capsuleY}px)`,
-          transition:
-            "opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1)",
-        }}
-      >
-        {/* Heading at top curve */}
-        <h3 className="absolute top-[8%] font-bricolage text-[clamp(1.1rem,3.6vw,3rem)] font-bold leading-tight text-white">
-          My
-          <br />
-          Impactful Projects
-        </h3>
+      <div className="sticky top-0 h-screen w-full overflow-hidden">
+        <div
+          className="absolute top-[12%] box-border flex h-[76%] w-[40%] min-w-[160px] max-w-[480px] flex-col items-center justify-center rounded-t-full rounded-b-full border-2 border-[#dddddd] bg-[#4f8680] px-[4%] text-center sm:border-3 md:border-4"
+          style={{
+            left: "50%",
+            zIndex: 20,
+            opacity: capsuleOpacity,
+            transform: `translateX(-50%) translateY(${capsuleY}px)`,
+            willChange: "opacity, transform",
+          }}
+        >
+          <h3 className="absolute top-[8%] font-bricolage text-[clamp(1.1rem,3.6vw,3rem)] font-bold leading-tight text-white">
+            My
+            <br />
+            Impactful Projects
+          </h3>
 
-        {/* White blocks / Pills - PERFECTLY centered inside capsule */}
-        <div className="flex w-[85%] flex-col items-center justify-center space-y-3 pt-[14%] sm:space-y-4 sm:pt-[12%] md:space-y-5 md:pt-[10%] lg:space-y-6">
-          <div className="h-8 w-full rounded-full bg-[#dddddd] sm:h-12 md:h-16 lg:h-20" />
-          <div className="h-8 w-full rounded-full bg-[#dddddd] sm:h-12 md:h-16 lg:h-20" />
-          <div className="h-8 w-full rounded-full bg-[#dddddd] sm:h-12 md:h-16 lg:h-20" />
+          <div className="flex w-[85%] flex-col items-center justify-center space-y-3 pt-[14%] sm:space-y-4 sm:pt-[12%] md:space-y-5 md:pt-[10%] lg:space-y-6">
+            <div className="h-8 w-full rounded-full bg-[#dddddd] sm:h-12 md:h-16 lg:h-20" />
+            <div className="h-8 w-full rounded-full bg-[#dddddd] sm:h-12 md:h-16 lg:h-20" />
+            <div className="h-8 w-full rounded-full bg-[#dddddd] sm:h-12 md:h-16 lg:h-20" />
+          </div>
         </div>
-      </div>
 
-      {/* ── 3 SIDE CARDS (Stage 2 entrance: Unlocked only after 750ms + scroll) ── */}
+        <div
+          className="absolute left-[4%] top-[54%] w-[24%] max-w-[320px]"
+          style={{
+            zIndex: 10,
+            ...getProjectMotion(0),
+            willChange: "opacity, transform",
+          }}
+        >
+          {renderProjectImage(projects[0])}
+          {renderProjectText(projects[0])}
+        </div>
 
-      {/* Card 1 — Left Center */}
-      <div
-        className="absolute left-[4%] top-[54%] w-[24%] max-w-[320px]"
-        style={{
-          zIndex: 10,
-          opacity: cardsOpacity,
-          transform: `translateY(${cardsY}px)`,
-          transition:
-            "opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1)",
-          transitionDelay: stage === 2 ? "100ms" : "0ms",
-        }}
-      >
-        <div className="aspect-[0.78] w-full rounded-lg bg-[#dddddd] sm:rounded-xl md:rounded-2xl" />
-        <p className="mt-1.5 text-[clamp(0.6rem,1.8vw,1.35rem)] font-bold leading-tight text-white sm:mt-3">
-          lorem fdsfkjfs d
-          <br />
-          dljfldskl jsj fdjkljdsklj
-        </p>
-      </div>
+        <div
+          className="absolute right-[4%] top-[12%] w-[24%] max-w-[320px]"
+          style={{
+            zIndex: 10,
+            ...getProjectMotion(1),
+            willChange: "opacity, transform",
+          }}
+        >
+          {renderProjectImage(projects[1])}
+          {renderProjectText(projects[1])}
+        </div>
 
-      {/* Card 2 — Top Right */}
-      <div
-        className="absolute right-[4%] top-[12%] w-[24%] max-w-[320px]"
-        style={{
-          zIndex: 10,
-          opacity: cardsOpacity,
-          transform: `translateY(${cardsY}px)`,
-          transition:
-            "opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1)",
-          transitionDelay: stage === 2 ? "250ms" : "0ms",
-        }}
-      >
-        <div className="aspect-[0.78] w-full rounded-lg bg-[#dddddd] sm:rounded-xl md:rounded-2xl" />
-        <p className="mt-1.5 text-[clamp(0.6rem,1.8vw,1.35rem)] font-bold leading-tight text-white sm:mt-3">
-          lorem fdsfkjfs d
-          <br />
-          djfldskl jsj fdjkljdsklj
-        </p>
-      </div>
-
-      {/* Card 3 — Bottom Right */}
-      <div
-        className="absolute bottom-[8%] right-[4%] w-[24%] max-w-[320px]"
-        style={{
-          zIndex: 10,
-          opacity: cardsOpacity,
-          transform: `translateY(${cardsY}px)`,
-          transition:
-            "opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1)",
-          transitionDelay: stage === 2 ? "400ms" : "0ms",
-        }}
-      >
-        <div className="aspect-[0.78] w-full rounded-lg bg-[#dddddd] sm:rounded-xl md:rounded-2xl" />
+        <div
+          className="absolute bottom-[8%] right-[4%] w-[24%] max-w-[320px]"
+          style={{
+            zIndex: 10,
+            ...getProjectMotion(2),
+            willChange: "opacity, transform",
+          }}
+        >
+          {renderProjectImage(projects[2])}
+          {renderProjectText(projects[2])}
+        </div>
       </div>
     </section>
   );

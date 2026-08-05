@@ -12,23 +12,16 @@ const socialLinks = [
 
 export default function HeroSection() {
   return (
-    <section className="relative box-border w-full overflow-hidden bg-[#0d0d0d] pt-5 pb-0 sm:pt-8 md:pt-10">
-      {/* Thin vertical grid line on the left */}
-      <div className="flex h-auto w-auto gap-3">
-      <div className="pointer-events-none absolute bottom-0 left-[clamp(1rem,4vw,4rem)] top-0 z-10 w-px bg-zinc-800/60" />
+    <section className="relative box-border w-full overflow-hidden bg-[#0d0d0d] pt-5 pb-8 sm:pt-8 md:pt-10">
       <div className="pointer-events-none absolute bottom-0 left-[clamp(1rem,4vw,4rem)] top-0 z-10 w-px bg-zinc-800/60" />
 
-      </div>
-
-      <div className="flex items-center justify-between px-[clamp(1.5rem,5vw,6rem)]">
-        <div className="text-white">A</div>
+      <div className="flex items-center gap-[clamp(1rem,4vw,4rem)] px-[clamp(1.5rem,5vw,6rem)]">
+        <div className="shrink-0 text-white">A</div>
         <Navbar />
       </div>
 
-      {/* Main content row */}
-      <div className="mt-8 flex items-start gap-8 justify-around h-[60vh]">
-        {/* Left: heading and paragraph */}
-        <div className="min-w-0 pl-3 max-w-[580px] flex-1 self-center lg:self-center">
+      <div className="mt-8 flex min-h-[420px] items-start justify-around gap-8">
+        <div className="min-w-0 max-w-[580px] flex-1 self-center pl-3 lg:self-center">
           <h2 className="font-bricolage max-w-[13ch] text-[clamp(2rem,3.2vw,3.6rem)] font-extrabold leading-[0.95] tracking-[-0.045em] text-white">
             Build Something Really Matters
           </h2>
@@ -44,9 +37,7 @@ export default function HeroSection() {
           </p>
         </div>
 
-        {/* Right: image card and social strip */}
         <div className="flex w-full shrink-0 items-stretch self-start overflow-hidden rounded-l-[clamp(1.5rem,3vw,3.6rem)] bg-black shadow-2xl shadow-black/40 sm:w-auto lg:self-center">
-          {/* Photo */}
           <div
             className="relative overflow-hidden bg-zinc-900"
             style={{
@@ -64,7 +55,6 @@ export default function HeroSection() {
             />
           </div>
 
-          {/* Social icons */}
           <div
             className="flex shrink-0 flex-col items-center justify-center gap-[clamp(1rem,2vw,2rem)] bg-black"
             style={{
@@ -92,13 +82,8 @@ export default function HeroSection() {
         </div>
       </div>
 
-      {/* Oversized name */}
-      <h1
-        className="font-bricolage mt-6 w-full select-none text-center text-[clamp(3.5rem,14vw,8rem)] font-extrabold leading-none tracking-tight text-white sm:mt-10 lg:mt-14"
-      >
-        Abhishek{" "}
-        <span className="mx-1 inline-block sm:mx-2">✦</span>{" "}
-        Choudhary
+      <h1 className="font-bricolage mt-6 w-full select-none text-center text-[clamp(3.5rem,11vw,8rem)] font-extrabold leading-none tracking-tight text-white sm:mt-10 lg:mt-14">
+        Abhishek <span className="mx-1 inline-block sm:mx-2">✦</span> Choudhary
       </h1>
     </section>
   );
